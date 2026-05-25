@@ -1,0 +1,120 @@
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model User {
+  id           String   @id @default(cuid())
+  name         String
+  email        String   @unique
+  passwordHash String
+  role         String   // "ADMIN", "DOCTOR", "ASHA"
+  village      String?
+  status       String   @default("ACTIVE") // "ACTIVE", "INACTIVE", "RESTRICTED"
+
+  phcId        String?
+  phc          PHC?     @relation(fields: [phcId], references: [id])
+
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  screeningsAsAsha Screening[] @relation("AshaScreenings")
+  doctorFollowups  FollowUp[]  @relation("DoctorFollowups")
+  ashaFollowups    FollowUp[]  @relation("AshaFollowups")
+}
+
+model PHC {
+  id        String   @id @default(cuid())
+  name      String
+  district  String
+  state     String
+  active    Boolean  @default(true)
+
+  users      User[]
+  screenings Screening[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Patient {
+  id          String   @id @default(cuid())
+  name        String
+  age         Int
+  gender      String
+  phone       String
+  village     String
+  houseNumber String?
+
+  screenings Screening[]
+  followups  FollowUp[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Screening {
+  id        String @id @default(cuid())
+
+  patientId String
+  patient   Patient @relation(fields: [patientId], references: [id])
+
+  ashaId String
+  asha   User @relation("AshaScreenings", fields: [ashaId], references: [id])
+
+  phcId String
+  phc   PHC @relation(fields: [phcId], references: [id])
+
+  bpSystolic  Int
+  bpDiastolic Int
+  sugar       Int
+
+  familyHistory Boolean @default(false)
+  lowActivity   Boolean @default(false)
+  tobaccoUse    Boolean @default(false)
+  symptoms      String?
+
+  riskLevel   String   // "RED", "YELLOW", "GREEN"
+  riskReasons String   // Stored as stringified JSON array: '["High BP"]'
+
+  consentGiven Boolean @default(true)
+
+  status String @default("NEW") // "NEW", "FOLLOW_UP", "RESOLVED"
+
+  doctorNotes  String?
+  diagnosis    String?
+  prescription String?
+  resolvedAt   DateTime?
+  resolvedBy   String?
+
+  followups FollowUp[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model FollowUp {
+  id String @id @default(cuid())
+
+  screeningId String
+  screening   Screening @relation(fields: [screeningId], references: [id])
+
+  patientId String
+  patient   Patient @relation(fields: [patientId], references: [id])
+
+  assignedToAshaId String
+  assignedToAsha   User @relation("AshaFollowups", fields: [assignedToAshaId], references: [id])
+
+  doctorId String
+  doctor   User @relation("DoctorFollowups", fields: [doctorId], references: [id])
+
+  note String
+  status String @default("PENDING") // "PENDING", "DONE"
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
