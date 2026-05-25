@@ -14,7 +14,7 @@ export default function DoctorDashboard() {
   const [activeTab, setActiveTab] = useState(searchParams.get('tab') || 'overview');
   const [selectedPatient, setSelectedPatient] = useState(null);
   
-  const { patients, systemStats, updatePatientClinicalDetails, resolvePatient, createFollowUp, loading, error, refresh } = useAppData();
+  const { patients, doctorStats, updatePatientClinicalDetails, resolvePatient, createFollowUp, loading, error, refresh } = useAppData();
 
   const [searchQuery, setSearchQuery] = useState('');
   const [riskFilter, setRiskFilter] = useState(searchParams.get('filter') || 'ALL');
@@ -140,18 +140,18 @@ export default function DoctorDashboard() {
       {/* OVERVIEW TAB */}
       {activeTab === 'overview' && (
         <div className="space-y-8">
-          {(systemStats?.highRisk > 0 || patients.filter(p => p.risk === 'high' && p.status === 'pending').length > 0) && (
+          {(doctorStats?.highRisk > 0 || patients.filter(p => p.risk === 'high' && p.status === 'pending').length > 0) && (
             <div className="bg-status-red/10 border border-status-red/30 rounded-xl p-4 flex items-center space-x-3">
               <AlertCircle className="w-5 h-5 text-status-red" />
               <p className="text-sm font-bold text-status-red uppercase tracking-wide">
-                {systemStats?.highRisk || patients.filter(p => p.risk === 'high' && p.status === 'pending').length} high-risk patients require immediate review today
+                {doctorStats?.highRisk || patients.filter(p => p.risk === 'high' && p.status === 'pending').length} high-risk patients require immediate review today
               </p>
             </div>
           )}
 
           <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
-            <KPICard title="Total Screened" value={systemStats?.totalScreened || safePatients.length} />
-            <KPICard title="RED Cases" value={systemStats?.highRisk || safePatients.filter(p => p.risk === 'high' || p.risk === 'RED').length} isDanger />
+            <KPICard title="Total Screened" value={doctorStats?.totalScreened || safePatients.length} />
+            <KPICard title="RED Cases" value={doctorStats?.highRisk || safePatients.filter(p => p.risk === 'high' || p.risk === 'RED').length} isDanger />
             <KPICard title="Follow-Ups Pending" value={followUpQueue.length} />
             <KPICard title="Resolved Cases" value={resolvedQueue.length} />
             <KPICard title="Today's Syncs" value={Math.floor(Math.random() * 40) + 10} /> 

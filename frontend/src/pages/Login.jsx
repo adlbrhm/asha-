@@ -35,11 +35,6 @@ export default function Login() {
     }
   };
 
-  const fillDemo = (role) => {
-    setEmail(role === 'doctor' ? 'doctor@asha.demo' : 'admin@asha.demo');
-    setPassword('password123');
-    setError('');
-  };
 
   return (
     <div className="min-h-screen overflow-y-auto lg:h-screen lg:overflow-hidden bg-[#050505] text-[#F4F1F2]">
@@ -142,18 +137,7 @@ export default function Login() {
                 </button>
               </form>
 
-              <div className="mt-8 pt-6 border-t border-white/10">
-                <p className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest mb-3 lg:text-left text-center">Demo Credentials</p>
-                <div className="flex justify-center lg:justify-start space-x-3">
-                  <button onClick={() => fillDemo('doctor')} type="button" className="rounded-lg border border-white/10 bg-[#18181B] px-3 py-2 text-xs font-semibold text-zinc-300 transition hover:border-[#A83255]/50 hover:text-white">
-                    Doctor Demo
-                  </button>
-                  <button onClick={() => fillDemo('admin')} type="button" className="rounded-lg border border-white/10 bg-[#18181B] px-3 py-2 text-xs font-semibold text-zinc-300 transition hover:border-[#A83255]/50 hover:text-white">
-                    Admin Demo
-                  </button>
-                </div>
-              </div>
-              
+
               <div className="mt-8 text-center px-2">
                 <p className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest leading-relaxed">
                   Authorized operational personnel only.<br className="lg:hidden" />

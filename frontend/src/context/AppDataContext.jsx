@@ -1,7 +1,7 @@
 import { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { getPatients, updatePatientStatus as apiUpdatePatientStatus, updatePatientClinicalDetails as apiUpdatePatientClinicalDetails, resolvePatient as apiResolvePatient, createFollowUp as apiCreateFollowUp } from '../services/patientService';
 import { getUsers, addUser as apiAddUser, changeUserStatus as apiChangeUserStatus, updatePersonnel as apiUpdatePersonnel, removeUser as apiRemoveUser } from '../services/userService';
-import { getSystemStats, getAdminStats, getVillageRiskHeatmap as apiGetVillageRiskHeatmap } from '../services/systemService';
+import { getSystemStats, getAdminStats, getDoctorStats, getVillageRiskHeatmap as apiGetVillageRiskHeatmap } from '../services/systemService';
 
 const AppDataContext = createContext();
 
@@ -10,6 +10,7 @@ export function AppDataProvider({ children }) {
   const [users, setUsers] = useState([]);
   const [systemStats, setSystemStats] = useState(null);
   const [adminStats, setAdminStats] = useState(null);
+  const [doctorStats, setDoctorStats] = useState(null);
   const [heatmapData, setHeatmapData] = useState([]);
   
   const [loading, setLoading] = useState(true);
@@ -19,17 +20,50 @@ export function AppDataProvider({ children }) {
     try {
       setLoading(true);
       setError(null);
-      const [patientsData, usersData, sysStats, admStats, heatmap] = await Promise.all([
-        getPatients(),
-        getUsers(),
-        getSystemStats(),
-        getAdminStats(),
-        apiGetVillageRiskHeatmap()
-      ]);
+
+      const userStr = localStorage.getItem('asha_plus_user');
+      const user = userStr ? JSON.parse(userStr) : null;
+      const role = user?.role?.toUpperCase?.();
+
+      let patientsData = [], usersData = [], sysStats = null, admStats = null, heatmap = [], docStats = null;
+
+      if (role === 'DOCTOR') {
+        const results = await Promise.allSettled([
+          getDoctorStats(),
+          getPatients(),
+        ]);
+        
+        docStats = results[0].status === 'fulfilled' ? results[0].value : null;
+        patientsData = results[1].status === 'fulfilled' ? results[1].value : [];
+        
+        if (results[0].status === 'rejected' && results[1].status === 'rejected') {
+          throw new Error('Failed to fetch essential operations data');
+        }
+      } else if (role === 'ADMIN') {
+        const results = await Promise.allSettled([
+          getSystemStats(),
+          getAdminStats(),
+          apiGetVillageRiskHeatmap(),
+          getUsers(),
+          getPatients()
+        ]);
+
+        sysStats = results[0].status === 'fulfilled' ? results[0].value : null;
+        admStats = results[1].status === 'fulfilled' ? results[1].value : null;
+        heatmap = results[2].status === 'fulfilled' ? results[2].value : [];
+        usersData = results[3].status === 'fulfilled' ? results[3].value : [];
+        patientsData = results[4].status === 'fulfilled' ? results[4].value : [];
+
+        if (results.every(r => r.status === 'rejected')) {
+          throw new Error('Failed to fetch operations data');
+        }
+      }
+
       setPatients(patientsData);
       setUsers(usersData);
       setSystemStats(sysStats);
       setAdminStats(admStats);
+      setDoctorStats(docStats);
       setHeatmapData(heatmap);
     } catch (err) {
       setError(err.message || 'Failed to fetch operations data');
@@ -132,6 +166,7 @@ export function AppDataProvider({ children }) {
       users,
       systemStats,
       adminStats,
+      doctorStats,
       heatmapData,
       loading,
       error,
