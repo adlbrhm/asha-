@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { X, Clock, CheckCircle2, FileText, User, Activity, AlertCircle, ShieldCheck } from 'lucide-react';
 import RiskBadge from '../shared/RiskBadge';
+import { renderSafe } from '../../utils/renderSafe';
 
 export default function PatientModal({ patient, onClose, onSaveNotes, onFollowUp, onResolve, isAdmin }) {
   const isResolved = patient?.status === 'RESOLVED';
@@ -30,8 +31,8 @@ export default function PatientModal({ patient, onClose, onSaveNotes, onFollowUp
         {/* HEADER */}
         <div className="flex items-center justify-between p-5 border-b border-border-primary/50 shrink-0 bg-surface-2/30">
           <div className="flex items-center space-x-4">
-            <h2 className="text-xl font-bold tracking-tight text-text-main">{patient.name}</h2>
-            <RiskBadge risk={patient.risk} />
+            <h2 className="text-xl font-bold tracking-tight text-text-main">{renderSafe(patient?.name)}</h2>
+            <RiskBadge risk={patient?.riskLevel || 'ALL'} />
             {isResolved && (
               <span className="inline-flex items-center space-x-1.5 px-2.5 py-0.5 rounded-md bg-status-green/10 border border-status-green/30">
                 <CheckCircle2 className="w-3 h-3 text-status-green" />
@@ -55,19 +56,19 @@ export default function PatientModal({ patient, onClose, onSaveNotes, onFollowUp
             <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
               <div>
                 <p className="text-[10px] uppercase tracking-wider font-semibold text-text-muted">Age / Gender</p>
-                <p className="text-sm font-semibold text-text-main mt-0.5">{patient.age}y / {patient.gender || 'Unknown'}</p>
+                <p className="text-sm font-semibold text-text-main mt-0.5">{renderSafe(patient?.age)}y / {renderSafe(patient?.gender)}</p>
               </div>
               <div>
                 <p className="text-[10px] uppercase tracking-wider font-semibold text-text-muted">Phone</p>
-                <p className="text-sm font-semibold text-text-main mt-0.5">98765•••••</p>
+                <p className="text-sm font-semibold text-text-main mt-0.5">{renderSafe(patient?.phone, 'N/A')}</p>
               </div>
               <div>
                 <p className="text-[10px] uppercase tracking-wider font-semibold text-text-muted">Village</p>
-                <p className="text-sm font-semibold text-text-main mt-0.5">{patient.village}</p>
+                <p className="text-sm font-semibold text-text-main mt-0.5">{renderSafe(patient?.village)}</p>
               </div>
               <div className="col-span-2">
                 <p className="text-[10px] uppercase tracking-wider font-semibold text-text-muted">House No.</p>
-                <p className="text-sm font-semibold text-text-main mt-0.5">{patient.id}</p>
+                <p className="text-sm font-semibold text-text-main mt-0.5">{renderSafe(patient?.houseNumber, 'N/A')}</p>
               </div>
             </div>
           </div>
@@ -80,11 +81,11 @@ export default function PatientModal({ patient, onClose, onSaveNotes, onFollowUp
             <div className="grid grid-cols-2 gap-4">
               <div className="bg-surface-2/30 p-4 rounded-xl border border-border-primary/50">
                 <p className="text-[10px] uppercase tracking-wider font-bold text-text-muted mb-1">Blood Pressure</p>
-                <p className="text-2xl font-bold tracking-tight text-text-main">{patient.vitals?.bp || 'N/A'}</p>
+                <p className="text-2xl font-bold tracking-tight text-text-main">{renderSafe(patient?.bp, 'N/A')}</p>
               </div>
               <div className="bg-surface-2/30 p-4 rounded-xl border border-border-primary/50">
                 <p className="text-[10px] uppercase tracking-wider font-bold text-text-muted mb-1">Blood Sugar</p>
-                <p className="text-2xl font-bold tracking-tight text-text-main">{patient.vitals?.sugar || 'N/A'}</p>
+                <p className="text-2xl font-bold tracking-tight text-text-main">{renderSafe(patient?.sugar, 'N/A')}</p>
               </div>
             </div>
             
@@ -119,11 +120,11 @@ export default function PatientModal({ patient, onClose, onSaveNotes, onFollowUp
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
               <div>
                 <p className="text-[10px] uppercase tracking-wider font-semibold text-text-muted">Operative</p>
-                <p className="text-sm font-semibold text-text-main mt-0.5">{patient.ashaWorker}</p>
+                <p className="text-sm font-semibold text-text-main mt-0.5">{renderSafe(patient?.ashaName)}</p>
               </div>
               <div>
                 <p className="text-[10px] uppercase tracking-wider font-semibold text-text-muted">PHC Node</p>
-                <p className="text-sm font-semibold text-text-main mt-0.5">{patient.phc || 'Network Default'}</p>
+                <p className="text-sm font-semibold text-text-main mt-0.5">{renderSafe(patient?.phcName, 'Network Default')}</p>
               </div>
               <div className="col-span-2">
                 <p className="text-[10px] uppercase tracking-wider font-semibold text-text-muted">Sync Timestamp</p>

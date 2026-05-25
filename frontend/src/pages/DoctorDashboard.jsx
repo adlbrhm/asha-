@@ -28,7 +28,7 @@ export default function DoctorDashboard() {
     if (filter) setRiskFilter(filter);
   }, [searchParams]);
 
-  const safePatients = Array.isArray(patients) ? patients : [];
+  const safePatients = useMemo(() => Array.isArray(patients) ? patients : [], [patients]);
 
   const filteredActiveQueue = useMemo(() => {
     const normalize = (value) => String(value || "").trim().toUpperCase();
@@ -42,8 +42,8 @@ export default function DoctorDashboard() {
     };
 
     return safePatients.filter(patient => {
-      const status = normalize(patient.status || 'PENDING');
-      const risk = normalizeRisk(patient.riskLevel || patient.risk || patient.riskStatus);
+      const status = normalize(patient?.status || 'PENDING');
+      const risk = normalizeRisk(patient?.riskLevel || 'ALL');
 
       const isActiveByDefault = status === "NEW" || status === "FOLLOW_UP" || status === "PENDING";
 
@@ -65,14 +65,12 @@ export default function DoctorDashboard() {
       const matchesSearch =
         !searchQuery ||
         [
-          patient.name,
-          patient.patientName,
-          patient.village,
-          patient.ashaWorker,
-          patient.ashaName,
-          patient.phone,
-          patient.vitals?.bp,
-          patient.id
+          patient?.name,
+          patient?.village,
+          patient?.ashaName,
+          patient?.phone,
+          patient?.bp,
+          patient?.id
         ]
           .filter(Boolean)
           .some((value) => String(value).toLowerCase().includes(searchQuery.toLowerCase()));
@@ -87,7 +85,7 @@ export default function DoctorDashboard() {
   const uniqueVillages = useMemo(() => {
     const v = new Set(safePatients.map(p => p.village));
     return Array.from(v).sort();
-  }, [patients]);
+  }, [safePatients]);
 
   if (loading) return <Loader message="Loading Operational Workspace..." />;
   if (error) return <ErrorState message={error} onRetry={refresh} />;
@@ -99,11 +97,7 @@ export default function DoctorDashboard() {
     setVillageFilter('ALL');
   };
 
-  const jumpToTriageVillage = (villageName) => {
-    handleReset();
-    setVillageFilter(villageName);
-    setActiveTab('triage');
-  };
+
 
   const renderTabNav = () => (
     <div className="flex items-center space-x-6 border-b border-border-primary/50 mb-6 overflow-x-auto">
@@ -140,32 +134,32 @@ export default function DoctorDashboard() {
       {/* OVERVIEW TAB */}
       {activeTab === 'overview' && (
         <div className="space-y-8">
-          {(doctorStats?.highRisk > 0 || patients.filter(p => p.risk === 'high' && p.status === 'pending').length > 0) && (
+          {(doctorStats?.highRisk > 0 || safePatients.filter(p => p?.riskLevel === 'RED' && p?.status === 'NEW').length > 0) && (
             <div className="bg-status-red/10 border border-status-red/30 rounded-xl p-4 flex items-center space-x-3">
               <AlertCircle className="w-5 h-5 text-status-red" />
               <p className="text-sm font-bold text-status-red uppercase tracking-wide">
-                {doctorStats?.highRisk || patients.filter(p => p.risk === 'high' && p.status === 'pending').length} high-risk patients require immediate review today
+                {doctorStats?.highRisk || safePatients.filter(p => p?.riskLevel === 'RED' && p?.status === 'NEW').length} high-risk patients require immediate review today
               </p>
             </div>
           )}
 
           <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
             <KPICard title="Total Screened" value={doctorStats?.totalScreened || safePatients.length} />
-            <KPICard title="RED Cases" value={doctorStats?.highRisk || safePatients.filter(p => p.risk === 'high' || p.risk === 'RED').length} isDanger />
+            <KPICard title="RED Cases" value={doctorStats?.highRisk || safePatients.filter(p => p?.riskLevel === 'RED').length} isDanger />
             <KPICard title="Follow-Ups Pending" value={followUpQueue.length} />
             <KPICard title="Resolved Cases" value={resolvedQueue.length} />
-            <KPICard title="Today's Syncs" value={Math.floor(Math.random() * 40) + 10} /> 
+            <KPICard title="Today's Syncs" value={14} />
           </div>
           
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
             <div className="bg-surface-1 border border-border-primary/50 rounded-2xl p-6 shadow-sm">
               <h2 className="text-sm font-bold tracking-tight text-text-main border-b border-border-primary/50 pb-4 mb-4">Critical Case Preview</h2>
               <div className="space-y-3">
-                {safePatients.filter(p => (p.risk === 'high' || p.risk === 'RED') && p.status !== 'RESOLVED').slice(0,3).map(p => (
+                {safePatients.filter(p => p?.riskLevel === 'RED' && p?.status !== 'RESOLVED').slice(0,3).map(p => (
                   <div key={p.id} className="flex justify-between items-center p-3 rounded-lg border border-border-primary/30 bg-surface-2/30">
                     <div>
-                      <p className="text-sm font-bold text-text-main">{p.name}</p>
-                      <p className="text-[10px] uppercase font-bold tracking-widest text-text-muted mt-1">{p.village} &bull; {p.status}</p>
+                      <p className="text-sm font-bold text-text-main">{p?.name || 'Unknown'}</p>
+                      <p className="text-[10px] uppercase font-bold tracking-widest text-text-muted mt-1">{p?.village || 'Unknown'} &bull; {p?.status || 'NEW'}</p>
                     </div>
                     <button onClick={() => { setActiveTab('triage'); setSelectedPatient(p); }} className="px-3 py-1.5 bg-surface-1 border border-border-primary/50 text-[10px] font-bold text-text-main rounded-md hover:bg-surface-2 transition-colors uppercase tracking-widest">
                       View

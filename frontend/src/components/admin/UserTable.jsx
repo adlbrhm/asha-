@@ -109,65 +109,67 @@ export default function UserTable({ users, onView, onUpdate, onRestrict, onChang
                   </td>
                   <td className="px-4 py-3 align-middle text-right">
                     <div className="flex items-center justify-end space-x-2">
-                      {!isAdmin && (
-                        <>
-                          <button 
-                            onClick={() => onView && onView(user)}
-                            className="px-3 py-1.5 bg-surface-2 hover:bg-border-primary/50 border border-border-primary/50 text-text-main text-xs font-medium rounded-lg transition-colors duration-200"
-                          >
-                            View
-                          </button>
-                          
-                          <button 
-                            onClick={() => onUpdate && onUpdate(user)}
-                            className="px-3 py-1.5 bg-surface-2 hover:bg-border-primary/50 border border-border-primary/50 text-text-main text-xs font-medium rounded-lg transition-colors duration-200"
-                          >
-                            Edit
-                          </button>
-                          
-                          <div className="relative inline-block text-left opacity-0 group-hover:opacity-100 focus-within:opacity-100">
-                            <button 
-                              onClick={(e) => toggleMenu(e, user.id)}
-                              className="px-3 py-1.5 bg-surface-2 hover:bg-border-primary/50 border border-border-primary/50 text-text-main text-xs font-medium rounded-lg transition-colors duration-200 flex items-center space-x-1"
-                            >
-                              <span>More</span>
-                            </button>
-                            
-                            {openMenuId === user.id && (
-                              <div 
-                                ref={menuRef}
-                                className={`absolute right-0 w-36 bg-surface-1 border border-border-primary/50 rounded-lg shadow-xl z-50 overflow-hidden text-left ${
-                                  openUpward ? "bottom-full mb-2" : "top-full mt-2"
-                                }`}
+                      {!isAdmin && (() => {
+                        const actions = [];
+                        if (onView) actions.push({ label: 'View', onClick: () => onView(user) });
+                        if (onUpdate) actions.push({ label: 'Edit', onClick: () => onUpdate(user) });
+
+                        const moreActions = [];
+                        if (st === 'ACTIVE' && onChangeStatus) moreActions.push({ label: 'Deactivate', onClick: () => onChangeStatus(user, 'INACTIVE') });
+                        if (st === 'INACTIVE' && onChangeStatus) moreActions.push({ label: 'Activate', onClick: () => onChangeStatus(user, 'ACTIVE') });
+                        if (st === 'RESTRICTED' && onChangeStatus) moreActions.push({ label: 'Restore', onClick: () => onChangeStatus(user, 'ACTIVE') });
+                        if (st !== 'RESTRICTED' && onRestrict) moreActions.push({ label: 'Restrict', onClick: () => onRestrict(user), danger: true });
+                        if (onRemove) moreActions.push({ label: 'Remove', onClick: () => onRemove(user), danger: true, borderTop: true });
+
+                        if (moreActions.length <= 2) {
+                          actions.push(...moreActions);
+                          moreActions.length = 0;
+                        }
+
+                        return (
+                          <>
+                            {actions.map((act, idx) => (
+                              <button 
+                                key={idx}
+                                onClick={act.onClick}
+                                className={`px-3 py-1.5 border text-xs font-medium rounded-lg transition-colors duration-200 ${act.danger ? 'bg-status-red/10 border-status-red/30 text-status-red hover:bg-status-red/20' : 'bg-surface-2 border-border-primary/50 text-text-main hover:bg-border-primary/50'}`}
                               >
-                                {st === 'ACTIVE' && (
-                                  <button onClick={() => { onChangeStatus && onChangeStatus(user, 'INACTIVE'); setOpenMenuId(null); }} className="w-full text-left px-4 py-2 text-xs font-medium text-text-main hover:bg-surface-2 transition-colors">
-                                    Deactivate
-                                  </button>
-                                )}
-                                {st === 'INACTIVE' && (
-                                  <button onClick={() => { onChangeStatus && onChangeStatus(user, 'ACTIVE'); setOpenMenuId(null); }} className="w-full text-left px-4 py-2 text-xs font-medium text-text-main hover:bg-surface-2 transition-colors">
-                                    Activate
-                                  </button>
-                                )}
-                                {st === 'RESTRICTED' && (
-                                  <button onClick={() => { onChangeStatus && onChangeStatus(user, 'ACTIVE'); setOpenMenuId(null); }} className="w-full text-left px-4 py-2 text-xs font-medium text-text-main hover:bg-surface-2 transition-colors">
-                                    Restore Access
-                                  </button>
-                                )}
-                                {st !== 'RESTRICTED' && (
-                                  <button onClick={() => { onRestrict && onRestrict(user); setOpenMenuId(null); }} className="w-full text-left px-4 py-2 text-xs font-medium text-status-red hover:bg-status-red/10 transition-colors">
-                                    Restrict
-                                  </button>
-                                )}
-                                <button onClick={() => { onRemove && onRemove(user); setOpenMenuId(null); }} className="w-full text-left px-4 py-2 text-xs font-medium text-status-red hover:bg-status-red/10 transition-colors border-t border-border-primary/30">
-                                  Remove
+                                {act.label}
+                              </button>
+                            ))}
+                            
+                            {moreActions.length > 0 && (
+                              <div className="relative inline-block text-left opacity-0 group-hover:opacity-100 focus-within:opacity-100">
+                                <button 
+                                  onClick={(e) => toggleMenu(e, user.id)}
+                                  className="px-3 py-1.5 bg-surface-2 hover:bg-border-primary/50 border border-border-primary/50 text-text-main text-xs font-medium rounded-lg transition-colors duration-200 flex items-center space-x-1"
+                                >
+                                  <span>More</span>
                                 </button>
+                                
+                                {openMenuId === user.id && (
+                                  <div 
+                                    ref={menuRef}
+                                    className={`absolute right-0 w-36 bg-surface-1 border border-border-primary/50 rounded-lg shadow-xl z-50 overflow-hidden text-left ${
+                                      openUpward ? "bottom-full mb-2" : "top-full mt-2"
+                                    }`}
+                                  >
+                                    {moreActions.map((act, idx) => (
+                                      <button 
+                                        key={idx}
+                                        onClick={() => { act.onClick(); setOpenMenuId(null); }} 
+                                        className={`w-full text-left px-4 py-2 text-xs font-medium transition-colors ${act.danger ? 'text-status-red hover:bg-status-red/10' : 'text-text-main hover:bg-surface-2'} ${act.borderTop ? 'border-t border-border-primary/30' : ''}`}
+                                      >
+                                        {act.label}
+                                      </button>
+                                    ))}
+                                  </div>
+                                )}
                               </div>
                             )}
-                          </div>
-                        </>
-                      )}
+                          </>
+                        );
+                      })()}
                     </div>
                   </td>
                 </tr>

@@ -48,18 +48,13 @@ export default function AddPersonnelModal({ onClose, onSave, existingUsers = [] 
     }
 
     const newUser = {
-      id: crypto.randomUUID?.() || `user_${Date.now()}`,
       name: formData.name.trim(),
       email: formData.email.trim(),
-      loginId: formData.email.trim(),
       password: formData.password,
       role: formData.role,
-      phc: formData.phc.trim(),
-      phcName: formData.phc.trim(),
+      phcId: formData.phc.trim(),
       village: formData.village.trim() || undefined,
-      status: formData.status,
-      lastActive: "Never",
-      createdAt: new Date().toISOString()
+      status: formData.status
     };
 
     onSave(newUser);

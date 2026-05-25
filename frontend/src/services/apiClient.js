@@ -16,9 +16,16 @@ async function request(endpoint, options = {}) {
     },
   });
 
-  const data = await response.json().catch(() => null);
+  const text = await response.text();
+  let data = null;
+  try {
+    data = text ? JSON.parse(text) : null;
+  } catch (e) {
+    // not JSON
+  }
 
   if (!response.ok) {
+    console.error(`[API Error] ${options.method || 'GET'} ${endpoint} - Status: ${response.status} - Message:`, data?.message || response.statusText);
     if (response.status === 401) {
       localStorage.removeItem('asha_plus_token');
       localStorage.removeItem('asha_plus_user');

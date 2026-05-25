@@ -1,9 +1,11 @@
 import { api } from './apiClient';
+import { normalizeScreening } from '../utils/normalizers';
 
 export async function getPatients(filters = {}) {
   const queryParams = new URLSearchParams(filters).toString();
   const query = queryParams ? `?${queryParams}` : '';
-  return await api.get(`/screenings${query}`);
+  const data = await api.get(`/screenings${query}`);
+  return Array.isArray(data) ? data.map(normalizeScreening) : [];
 }
 
 export async function updatePatientStatus(id, newStatus) {
@@ -29,5 +31,6 @@ export async function createFollowUp(id) {
 }
 
 export async function getFollowups() {
-  return await api.get('/followups');
+  const data = await api.get('/followups');
+  return Array.isArray(data) ? data.map(normalizeScreening) : [];
 }

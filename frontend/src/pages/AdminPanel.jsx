@@ -12,7 +12,7 @@ import Loader from '../components/shared/Loader';
 import ErrorState from '../components/shared/ErrorState';
 import EmptyState from '../components/shared/EmptyState';
 import { useAppData } from '../context/AppDataContext';
-import { Activity, MapPin, Plus } from 'lucide-react';
+import { Activity, Plus } from 'lucide-react';
 
 export default function AdminPanel() {
   const { 
@@ -21,7 +21,7 @@ export default function AdminPanel() {
     heatmapData = [], 
     patients = [], 
     addUser,
-    removeUser, 
+    removePersonnel, 
     changeUserStatus, 
     updatePersonnel,
     loading, 
@@ -29,18 +29,15 @@ export default function AdminPanel() {
     refresh 
   } = useAppData() || {};
   
-  const [searchParams, setSearchParams] = useSearchParams();
+  const [searchParams] = useSearchParams();
   const [activeTab, setActiveTab] = useState(searchParams.get('tab') || 'overview');
   
-  useEffect(() => {
-    const tab = searchParams.get('tab');
-    if (tab) setActiveTab(tab);
-  }, [searchParams]);
+
 
   const [selectedUser, setSelectedUser] = useState(null);
   const [selectedPHC, setSelectedPHC] = useState(null);
   const [selectedPatient, setSelectedPatient] = useState(null);
-  const [selectedVillage, setSelectedVillage] = useState(null);
+
   
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [userToUpdate, setUserToUpdate] = useState(null);
@@ -52,9 +49,9 @@ export default function AdminPanel() {
 
   const [screeningsVillageFilter, setScreeningsVillageFilter] = useState('ALL');
 
-  const safeUsers = Array.isArray(users) ? users : [];
-  const safePatients = Array.isArray(patients) ? patients : [];
-  const safeHeatmap = Array.isArray(heatmapData) ? heatmapData : [];
+  const safeUsers = useMemo(() => Array.isArray(users) ? users : [], [users]);
+  const safePatients = useMemo(() => Array.isArray(patients) ? patients : [], [patients]);
+  const safeHeatmap = useMemo(() => Array.isArray(heatmapData) ? heatmapData : [], [heatmapData]);
 
   const activeFieldOps = useMemo(() => safeUsers.filter(u => u.role === 'ASHA' && u.status === 'Active').length || 0, [safeUsers]);
   const networkDoctors = useMemo(() => safeUsers.filter(u => u.role === 'Doctor').length || 0, [safeUsers]);
@@ -64,8 +61,12 @@ export default function AdminPanel() {
 
   const handleRemoveConfirm = async () => {
     if (userToRemove) {
-      await removeUser(userToRemove.id);
-      setUserToRemove(null);
+      try {
+        await removePersonnel(userToRemove.id);
+        setUserToRemove(null);
+      } catch (err) {
+        alert(err.message || 'Failed to remove personnel');
+      }
     }
   };
 
@@ -181,11 +182,11 @@ export default function AdminPanel() {
             <div className="flex items-center space-x-8">
               <div>
                 <p className="text-[10px] uppercase tracking-wider font-bold text-text-muted mb-1">Total RED Cases</p>
-                <p className="text-2xl font-bold text-status-red">{patients?.filter(p => p.risk === 'high' || p.risk === 'RED').length || 0}</p>
+                <p className="text-2xl font-bold text-status-red">{patients?.filter(p => p?.riskLevel === 'RED').length || 0}</p>
               </div>
               <div className="border-l border-border-primary/30 pl-8">
                 <p className="text-[10px] uppercase tracking-wider font-bold text-text-muted mb-1">Total YELLOW Cases</p>
-                <p className="text-2xl font-bold text-status-yellow">{patients?.filter(p => p.risk === 'medium' || p.risk === 'YELLOW').length || 0}</p>
+                <p className="text-2xl font-bold text-status-yellow">{patients?.filter(p => p?.riskLevel === 'YELLOW').length || 0}</p>
               </div>
             </div>
           </div>

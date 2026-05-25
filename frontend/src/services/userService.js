@@ -1,8 +1,10 @@
 import { api } from './apiClient';
+import { normalizeUser } from '../utils/normalizers';
 
 export async function getUsers(role = null) {
   const query = role ? `?role=${role}` : '';
-  return await api.get(`/users${query}`);
+  const data = await api.get(`/users${query}`);
+  return Array.isArray(data) ? data.map(normalizeUser) : [];
 }
 
 export async function addUser(user) {
@@ -30,6 +32,6 @@ export async function restrictPersonnel(id) {
   return await api.patch(`/users/${id}/restrict`, {});
 }
 
-export async function removeUser(id) {
+export async function removePersonnel(id) {
   return await api.delete(`/users/${id}`);
 }

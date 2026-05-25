@@ -1,6 +1,6 @@
 import { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { getPatients, updatePatientStatus as apiUpdatePatientStatus, updatePatientClinicalDetails as apiUpdatePatientClinicalDetails, resolvePatient as apiResolvePatient, createFollowUp as apiCreateFollowUp, getFollowups } from '../services/patientService';
-import { getUsers, addUser as apiAddUser, changeUserStatus as apiChangeUserStatus, updatePersonnel as apiUpdatePersonnel, removeUser as apiRemoveUser } from '../services/userService';
+import { getUsers, addUser as apiAddUser, changeUserStatus as apiChangeUserStatus, updatePersonnel as apiUpdatePersonnel, removePersonnel as apiRemovePersonnel } from '../services/userService';
 import { getSystemStats, getAdminStats, getDoctorStats, getVillageRiskHeatmap as apiGetVillageRiskHeatmap, getNotifications, getPhcs } from '../services/systemService';
 
 const AppDataContext = createContext();
@@ -156,13 +156,13 @@ export function AppDataProvider({ children }) {
     }
   };
 
-  const removeUser = async (id) => {
+  const removePersonnel = async (id) => {
     try {
-      setUsers(prev => prev.filter(u => u.id !== id));
-      await apiRemoveUser(id);
+      const updatedUser = await apiRemovePersonnel(id);
+      setUsers(prev => prev.map(u => u.id === id ? { ...u, status: 'INACTIVE' } : u));
     } catch (err) {
-      fetchAllData();
-      alert('Failed to remove personnel');
+      console.error("Remove personnel failed:", err);
+      throw err;
     }
   };
   
@@ -184,7 +184,7 @@ export function AppDataProvider({ children }) {
       addUser,
       changeUserStatus,
       updatePersonnel,
-      removeUser,
+      removePersonnel,
     }}>
       {children}
     </AppDataContext.Provider>

@@ -39,7 +39,27 @@ export default function TopNavbar() {
   const handleNotificationClick = (action) => {
     setUnreadNotifications(false);
     setShowNotifications(false);
-    if (action) navigate(action);
+    if (!action) return;
+
+    switch (action) {
+      case 'OPEN_TRIAGE':
+        navigate('/dashboard?tab=triage');
+        break;
+      case 'OPEN_FOLLOWUPS':
+        navigate('/dashboard?tab=followups');
+        break;
+      case 'OPEN_HEATMAP':
+        navigate('/admin?tab=heatmap');
+        break;
+      case 'OPEN_PERSONNEL':
+        navigate('/admin?tab=personnel');
+        break;
+      case 'OPEN_SCREENINGS':
+        navigate('/admin?tab=screenings');
+        break;
+      default:
+        navigate(action);
+    }
   };
 
   useEffect(() => {
@@ -116,14 +136,14 @@ export default function TopNavbar() {
                     <div 
                       key={n.id} 
                       onClick={() => handleNotificationClick(n.action)}
-                      className={`px-4 py-3 hover:bg-surface-2/50 transition-colors duration-200 cursor-pointer border-l-2 ${n.severity === 'Critical' ? 'border-status-red' : n.severity === 'Sync' ? 'border-status-green' : n.severity === 'Follow-Up' ? 'border-status-yellow' : 'border-accent-primary'}`}
+                      className={`px-4 py-3 hover:bg-surface-2/50 transition-colors duration-200 cursor-pointer border-l-2 ${n.severity === 'CRITICAL' ? 'border-status-red' : n.severity === 'INFO' ? 'border-status-green' : n.severity === 'HIGH' ? 'border-status-yellow' : 'border-accent-primary'}`}
                     >
                       <div className="flex items-center space-x-2 mb-1">
-                        <span className={`px-1.5 py-0.5 rounded text-[9px] uppercase font-bold tracking-widest ${n.severity === 'Critical' ? 'bg-status-red/10 text-status-red' : n.severity === 'Sync' ? 'bg-status-green/10 text-status-green' : n.severity === 'Follow-Up' ? 'bg-status-yellow/10 text-status-yellow' : 'bg-accent-primary/10 text-accent-primary'}`}>{n.severity}</span>
-                        <span className="text-[10px] font-medium text-text-muted">{n.timestamp}</span>
+                        <span className={`px-1.5 py-0.5 rounded text-[9px] uppercase font-bold tracking-widest ${n.severity === 'CRITICAL' ? 'bg-status-red/10 text-status-red' : n.severity === 'INFO' ? 'bg-status-green/10 text-status-green' : n.severity === 'HIGH' ? 'bg-status-yellow/10 text-status-yellow' : 'bg-accent-primary/10 text-accent-primary'}`}>{n.severity}</span>
+                        <span className="text-[10px] font-medium text-text-muted">{new Date(n.createdAt).toLocaleString()}</span>
                       </div>
                       <p className="text-sm font-semibold text-text-main leading-tight">{n.title}</p>
-                      <p className="text-[11px] text-text-muted mt-1 leading-tight">{n.description}</p>
+                      <p className="text-[11px] text-text-muted mt-1 leading-tight">{n.message}</p>
                     </div>
                   ))
                 ) : (

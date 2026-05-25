@@ -1,4 +1,5 @@
 import { api } from './apiClient';
+import { normalizePhc, normalizeNotification } from '../utils/normalizers';
 
 export async function getSystemStats() {
   return await api.get('/stats/system');
@@ -17,9 +18,11 @@ export async function getVillageRiskHeatmap() {
 }
 
 export async function getNotifications() {
-  return await api.get('/notifications');
+  const data = await api.get('/notifications');
+  return Array.isArray(data) ? data.map(normalizeNotification) : [];
 }
 
 export async function getPhcs() {
-  return await api.get('/phcs');
+  const data = await api.get('/phcs');
+  return Array.isArray(data) ? data.map(normalizePhc) : [];
 }
