@@ -27,3 +27,7 @@ export async function createFollowUp(id) {
     note: '' // Handled by backend fallback
   });
 }
+
+export async function getFollowups() {
+  return await api.get('/followups');
+}

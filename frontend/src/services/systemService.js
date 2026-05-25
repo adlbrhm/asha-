@@ -19,3 +19,7 @@ export async function getVillageRiskHeatmap() {
 export async function getNotifications() {
   return await api.get('/notifications');
 }
+
+export async function getPhcs() {
+  return await api.get('/phcs');
+}

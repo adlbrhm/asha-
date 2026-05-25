@@ -1,7 +1,7 @@
 import { createContext, useContext, useState, useEffect, useCallback } from 'react';
-import { getPatients, updatePatientStatus as apiUpdatePatientStatus, updatePatientClinicalDetails as apiUpdatePatientClinicalDetails, resolvePatient as apiResolvePatient, createFollowUp as apiCreateFollowUp } from '../services/patientService';
+import { getPatients, updatePatientStatus as apiUpdatePatientStatus, updatePatientClinicalDetails as apiUpdatePatientClinicalDetails, resolvePatient as apiResolvePatient, createFollowUp as apiCreateFollowUp, getFollowups } from '../services/patientService';
 import { getUsers, addUser as apiAddUser, changeUserStatus as apiChangeUserStatus, updatePersonnel as apiUpdatePersonnel, removeUser as apiRemoveUser } from '../services/userService';
-import { getSystemStats, getAdminStats, getDoctorStats, getVillageRiskHeatmap as apiGetVillageRiskHeatmap } from '../services/systemService';
+import { getSystemStats, getAdminStats, getDoctorStats, getVillageRiskHeatmap as apiGetVillageRiskHeatmap, getNotifications, getPhcs } from '../services/systemService';
 
 const AppDataContext = createContext();
 
@@ -31,28 +31,34 @@ export function AppDataProvider({ children }) {
         const results = await Promise.allSettled([
           getDoctorStats(),
           getPatients(),
+          getFollowups(),
+          getNotifications(),
         ]);
         
         docStats = results[0].status === 'fulfilled' ? results[0].value : null;
         patientsData = results[1].status === 'fulfilled' ? results[1].value : [];
+        // followups and notifications will be added if needed, but not stored in context state in this snippet right now, or we can store them.
         
         if (results[0].status === 'rejected' && results[1].status === 'rejected') {
           throw new Error('Failed to fetch essential operations data');
         }
       } else if (role === 'ADMIN') {
         const results = await Promise.allSettled([
-          getSystemStats(),
           getAdminStats(),
-          apiGetVillageRiskHeatmap(),
+          getSystemStats(),
           getUsers(),
-          getPatients()
+          getPhcs(),
+          getPatients(),
+          apiGetVillageRiskHeatmap(),
+          getNotifications(),
         ]);
 
-        sysStats = results[0].status === 'fulfilled' ? results[0].value : null;
-        admStats = results[1].status === 'fulfilled' ? results[1].value : null;
-        heatmap = results[2].status === 'fulfilled' ? results[2].value : [];
-        usersData = results[3].status === 'fulfilled' ? results[3].value : [];
+        admStats = results[0].status === 'fulfilled' ? results[0].value : null;
+        sysStats = results[1].status === 'fulfilled' ? results[1].value : null;
+        usersData = results[2].status === 'fulfilled' ? results[2].value : [];
+        // phcs are not currently stored in context but loaded.
         patientsData = results[4].status === 'fulfilled' ? results[4].value : [];
+        heatmap = results[5].status === 'fulfilled' ? results[5].value : [];
 
         if (results.every(r => r.status === 'rejected')) {
           throw new Error('Failed to fetch operations data');
