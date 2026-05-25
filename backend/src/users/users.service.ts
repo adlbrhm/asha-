@@ -26,7 +26,7 @@ export class UsersService {
       ];
     }
 
-    return this.prisma.user.findMany({
+    const users = await this.prisma.user.findMany({
       where,
       select: {
         id: true,
@@ -46,6 +46,18 @@ export class UsersService {
         updatedAt: true,
       },
     });
+
+    return users.map(user => ({
+      id: user.id,
+      name: user.name,
+      email: user.email,
+      role: user.role,
+      status: user.status,
+      phcId: user.phcId,
+      phcName: user.phc?.name || null,
+      village: user.village,
+      lastActive: user.updatedAt,
+    }));
   }
 
   async findOne(id: string) {
@@ -63,10 +75,11 @@ export class UsersService {
       name: user.name,
       email: user.email,
       role: user.role,
+      status: user.status,
       phcId: user.phcId,
       phcName: user.phc?.name || null,
       village: user.village,
-      status: user.status,
+      lastActive: user.updatedAt,
     };
   }
 
@@ -232,8 +245,17 @@ export class UsersService {
       throw new ForbiddenException('Cannot delete ADMIN users');
     }
 
-    return this.prisma.user.delete({
+    const updatedUser = await this.prisma.user.update({
       where: { id },
+      data: {
+        status: 'INACTIVE',
+      },
     });
+
+    return {
+      success: true,
+      message: 'Personnel deactivated successfully',
+      user: updatedUser,
+    };
   }
 }

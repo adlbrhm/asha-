@@ -8,8 +8,29 @@ export class PhcsService {
   constructor(private readonly prisma: PrismaService) {}
 
   async findAll() {
-    return this.prisma.pHC.findMany({
+    const phcs = await this.prisma.pHC.findMany({
       orderBy: { createdAt: 'desc' },
+      include: {
+        users: {
+          select: { role: true, village: true }
+        }
+      }
+    });
+
+    return phcs.map(phc => {
+      const doctorsCount = phc.users.filter(u => u.role === 'DOCTOR').length;
+      const ashaCount = phc.users.filter(u => u.role === 'ASHA').length;
+      const villages = new Set(phc.users.filter(u => u.role === 'ASHA' && u.village).map(u => u.village));
+      
+      return {
+        id: phc.id,
+        name: phc.name,
+        district: phc.district,
+        status: phc.active ? 'ACTIVE' : 'INACTIVE',
+        doctorsCount,
+        ashaCount,
+        villagesCovered: villages.size,
+      };
     });
   }
 

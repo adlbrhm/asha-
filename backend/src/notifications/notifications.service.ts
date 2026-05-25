@@ -11,7 +11,7 @@ export class NotificationsService {
     if (currentUser.role === 'DOCTOR') {
       if (!currentUser.phcId) return [];
 
-      const redPatients = await this.prisma.screening.count({
+      const redCount = await this.prisma.screening.count({
         where: {
           phcId: currentUser.phcId,
           riskLevel: 'RED',
@@ -19,68 +19,122 @@ export class NotificationsService {
         }
       });
 
-      if (redPatients > 0) {
+      if (redCount > 0) {
         notifications.push({
-          id: 'red_pending',
-          title: 'Critical Patients Pending',
-          description: `${redPatients} RED patients pending clinical review`,
-          timestamp: new Date().toISOString(),
-          severity: 'Critical',
-          action: 'triage',
+          id: `doc_red_${Date.now()}`,
+          title: `${redCount} RED patients pending review`,
+          message: `${redCount} high-risk screenings awaiting review.`,
+          type: 'CLINICAL_ALERT',
+          severity: 'CRITICAL',
+          targetType: 'SCREENING',
+          targetId: null,
+          action: 'OPEN_TRIAGE',
+          createdAt: new Date().toISOString(),
+          read: false
         });
       }
 
-      const followUps = await this.prisma.followUp.count({
+      const followupCount = await this.prisma.screening.count({
         where: {
-          doctorId: currentUser.id,
-          status: 'PENDING',
+          phcId: currentUser.phcId,
+          status: 'FOLLOW_UP',
         }
       });
 
-      if (followUps > 0) {
+      if (followupCount > 0) {
         notifications.push({
-          id: 'followups_due',
-          title: 'Follow-Ups Due',
-          description: `${followUps} follow-ups are due today`,
-          timestamp: new Date().toISOString(),
-          severity: 'Follow-Up',
-          action: 'followups',
+          id: `doc_fup_${Date.now()}`,
+          title: `${followupCount} follow-ups pending`,
+          message: `${followupCount} patients require follow-up.`,
+          type: 'CLINICAL_ALERT',
+          severity: 'HIGH',
+          targetType: 'SCREENING',
+          targetId: null,
+          action: 'OPEN_FOLLOWUPS',
+          createdAt: new Date().toISOString(),
+          read: false
         });
       }
-    }
 
-    if (currentUser.role === 'ADMIN') {
-      const syncScreenings = await this.prisma.screening.count({
+      const recentScreenings = await this.prisma.screening.count({
         where: {
+          phcId: currentUser.phcId,
           createdAt: {
             gte: new Date(Date.now() - 24 * 60 * 60 * 1000)
           }
         }
       });
 
-      if (syncScreenings > 0) {
+      if (recentScreenings > 0) {
         notifications.push({
-          id: 'sync_completed',
-          title: 'Sync Completed',
-          description: `ASHA workers synced ${syncScreenings} screenings in the last 24h`,
-          timestamp: new Date().toISOString(),
-          severity: 'Sync',
-          action: 'activity',
+          id: `doc_new_${Date.now()}`,
+          title: `New ASHA screenings received`,
+          message: `${recentScreenings} new screenings received in the last 24h.`,
+          type: 'OPERATIONAL',
+          severity: 'INFO',
+          targetType: 'SCREENING',
+          targetId: null,
+          action: 'OPEN_TRIAGE',
+          createdAt: new Date().toISOString(),
+          read: false
+        });
+      }
+    }
+
+    if (currentUser.role === 'ADMIN') {
+      const redBacklog = await this.prisma.screening.count({
+        where: {
+          riskLevel: 'RED',
+          status: { in: ['NEW', 'FOLLOW_UP'] },
+        }
+      });
+
+      if (redBacklog >= 5) {
+        notifications.push({
+          id: `adm_heatmap_${Date.now()}`,
+          title: `High burden detected`,
+          message: `Multiple villages have increased RED burden.`,
+          type: 'OPERATIONAL_ALERT',
+          severity: 'HIGH',
+          targetType: 'VILLAGE',
+          targetId: null,
+          action: 'OPEN_HEATMAP',
+          createdAt: new Date().toISOString(),
+          read: false
         });
       }
 
-      const highBurdenScreenings = await this.prisma.screening.count({
-        where: { riskLevel: 'RED', status: { not: 'RESOLVED' } }
+      if (redBacklog > 0) {
+        notifications.push({
+          id: `adm_red_${Date.now()}`,
+          title: `${redBacklog} unresolved RED backlog`,
+          message: `There are unresolved high-risk screenings in the district.`,
+          type: 'OPERATIONAL_ALERT',
+          severity: 'CRITICAL',
+          targetType: 'SCREENING',
+          targetId: null,
+          action: 'OPEN_SCREENINGS',
+          createdAt: new Date().toISOString(),
+          read: false
+        });
+      }
+
+      const restrictedCount = await this.prisma.user.count({
+        where: { status: 'RESTRICTED' },
       });
 
-      if (highBurdenScreenings >= 5) {
+      if (restrictedCount > 0) {
         notifications.push({
-          id: 'high_burden',
-          title: 'Burden Increased',
-          description: `Multiple PHCs have increased RED burden`,
-          timestamp: new Date().toISOString(),
-          severity: 'Operational',
-          action: 'heatmap',
+          id: `adm_restrict_${Date.now()}`,
+          title: `${restrictedCount} personnel accounts restricted`,
+          message: `${restrictedCount} network accounts are currently restricted.`,
+          type: 'SECURITY_ALERT',
+          severity: 'HIGH',
+          targetType: 'USER',
+          targetId: null,
+          action: 'OPEN_PERSONNEL',
+          createdAt: new Date().toISOString(),
+          read: false
         });
       }
     }
