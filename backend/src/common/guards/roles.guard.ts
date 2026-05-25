@@ -22,6 +22,11 @@ export class RolesGuard implements CanActivate {
       return false;
     }
 
-    return requiredRoles.includes(user.role);
+    const userRole = user.role?.toUpperCase?.();
+    const normalizedRequiredRoles = requiredRoles.map((role) =>
+      String(role).toUpperCase()
+    );
+
+    return normalizedRequiredRoles.includes(userRole);
   }
 }
